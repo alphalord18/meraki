@@ -6,28 +6,36 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="h-screen relative bg-gradient-to-br from-[#E8EAF6] to-[#F4F4F4]">
-        <div className="container mx-auto h-full flex items-center">
+      <section 
+        className="h-screen relative bg-cover bg-center"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1525022083939-c1c6840f06c3?auto=format&fit=crop&q=80')",
+        }}
+      >
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#2E4A7D]/90 to-transparent" />
+
+        <div className="container mx-auto h-full flex items-center relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-2xl"
+            className="max-w-2xl text-white"
           >
-            <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-[#2E4A7D] to-[#FFC857] bg-clip-text text-transparent">
+            <h1 className="text-6xl font-bold mb-6">
               MERAKI 2025
             </h1>
-            <p className="text-2xl text-gray-700 mb-8">
+            <p className="text-2xl mb-8">
               Where Creativity Meets Expression
             </p>
             <div className="flex gap-4">
               <Link href="/register">
-                <Button className="bg-[#2E4A7D] hover:bg-[#2E4A7D]/90 text-white px-8 py-6">
+                <Button className="bg-white text-[#2E4A7D] hover:bg-white/90 px-8 py-6">
                   Register Now
                 </Button>
               </Link>
               <Link href="/events">
-                <Button variant="outline" className="px-8 py-6">
+                <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-6">
                   View Events
                 </Button>
               </Link>
