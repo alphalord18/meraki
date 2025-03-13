@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Firebase School Update Endpoint
-  app.put("/api/schools/firebase/:id", async (req, res) => { // New route for Firebase update
+  app.put("/api/schools/firebase/:id", async (req, res) => { // Route for Firebase school update
     try {
       const { id } = req.params;
       const schoolData = req.body;
@@ -168,6 +168,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating school:", error);
       res.status(500).json({ success: false, message: "Failed to update school (Firebase)" });
+    }
+  });
+
+  app.put("/api/participants/firebase/:id", async (req, res) => { // New route for Firebase participant update
+    try {
+      const { id } = req.params;
+      const participantData = req.body;
+
+      const participantRef = adminDb.collection("participants").doc(id);
+      await participantRef.update(participantData);
+
+      res.status(200).json({ success: true, message: "Participant updated successfully (Firebase)" });
+    } catch (error) {
+      console.error("Error updating participant:", error);
+      res.status(500).json({ success: false, message: "Failed to update participant (Firebase)" });
     }
   });
 

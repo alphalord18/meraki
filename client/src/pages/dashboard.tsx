@@ -40,7 +40,7 @@ export default function Dashboard() {
       phone: ""
     }
   });
-  
+
   // Load school data
   useEffect(() => {
     const fetchSchoolData = async () => {
@@ -48,7 +48,7 @@ export default function Dashboard() {
         try {
           const schoolRef = doc(db, "schools", registrationData.schoolId);
           const schoolSnap = await getDoc(schoolRef);
-          
+
           if (schoolSnap.exists()) {
             const data = { id: schoolSnap.id, ...schoolSnap.data() } as School;
             setSchoolData(data);
@@ -59,10 +59,10 @@ export default function Dashboard() {
         }
       }
     };
-    
+
     fetchSchoolData();
   }, [registrationData]);
-  
+
   // Function to update school details
   const updateSchoolDetails = async (data) => {
     try {
@@ -76,12 +76,12 @@ export default function Dashboard() {
           pincode: data.pincode,
           phone: data.phone
         });
-        
+
         toast({
           title: "Success",
           description: "School details updated successfully!",
         });
-        
+
         // Update local state
         setSchoolData({ id: registrationData.schoolId, ...data });
       }
@@ -98,7 +98,7 @@ export default function Dashboard() {
   const coordinatorForm = useForm({
     resolver: zodResolver(coordinatorFormSchema),
   });
-  
+
   const participantForm = useForm({
     resolver: zodResolver(participantFormSchema),
   });
@@ -111,12 +111,12 @@ export default function Dashboard() {
     }
 
     const parsed = JSON.parse(data);
-    
+
     // If participants are not loaded yet, set a default empty array
     if (!parsed.participants) {
       parsed.participants = [];
     }
-    
+
     setRegistrationData(parsed);
 
     // Set form default values
@@ -135,41 +135,41 @@ export default function Dashboard() {
       let values;
       let docRef;
       let updated;
-      
+
       if (type === "participant" && selectedParticipant) {
         values = participantForm.getValues();
         docRef = doc(db, "participants", selectedParticipant.id);
         await updateDoc(docRef, values);
-        
+
         // Update local storage - find and replace the participant
         const updatedParticipants = registrationData.participants.map((p: any) => 
           p.id === selectedParticipant.id ? { ...p, ...values } : p
         );
-        
+
         updated = {
           ...registrationData,
           participants: updatedParticipants
         };
-        
+
         setIsEditingParticipant(false);
       } else {
         // Handle school/coordinator as before
         const form = type === "school" ? schoolForm : coordinatorForm;
         values = form.getValues();
-        
+
         docRef = doc(db, "registrations", registrationData.id);
         await updateDoc(docRef, {
           [type]: values
         });
-        
+
         updated = {
           ...registrationData,
           [type]: values
         };
-        
+
         setIsEditing(false);
       }
-      
+
       // Update local storage
       localStorage.setItem("registrationData", JSON.stringify(updated));
       setRegistrationData(updated);
@@ -188,33 +188,33 @@ export default function Dashboard() {
       setIsSaving(false);
     }
   };
-  
+
   const handleEditSchool = () => {
     setIsEditing(true);
     if (schoolData) {
       schoolForm.reset(schoolData);
     }
   };
-  
+
   const handleSaveSchool = async (data: any) => {
     if (!registrationData?.schoolId) return;
-    
+
     setIsSaving(true);
     try {
       // Update in Firebase
       const schoolRef = doc(db, "schools", registrationData.schoolId);
       await updateDoc(schoolRef, data);
-      
+
       // Update in API if available
       try {
         await axios.put(`/api/schools/${registrationData.schoolId}`, data);
       } catch (apiError) {
         console.warn("API update failed, but Firebase update succeeded:", apiError);
       }
-      
+
       setSchoolData({ ...schoolData, ...data } as School);
       setIsEditing(false);
-      
+
       toast({
         title: "School Updated",
         description: "School details have been updated successfully."
@@ -230,7 +230,7 @@ export default function Dashboard() {
       setIsSaving(false);
     }
   };
-  
+
   const handleEditParticipant = (participant: any) => {
     setSelectedParticipant(participant);
     participantForm.reset(participant);
@@ -248,7 +248,7 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">Registration Dashboard</h1>
           <Button variant="outline" onClick={handleLogout}>Logout</Button>
         </div>
-        
+
         {/* School Details Card */}
         <Card className="mb-8 bg-white">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -389,120 +389,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <div className="space-y-8">
-          {/* School Details */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>School Details</CardTitle>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  {isEditing ? "Cancel" : "Edit"}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <Form {...schoolForm}>
-                  <form onSubmit={schoolForm.handleSubmit(() => handleSave("school"))} className="space-y-4">
-                    <FormField
-                      control={schoolForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>School Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={schoolForm.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Address</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={schoolForm.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={schoolForm.control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={schoolForm.control}
-                      name="pincode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Pincode</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={schoolForm.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" disabled={isSaving}>
-                      {isSaving ? "Saving..." : "Save Changes"}
-                    </Button>
-                  </form>
-                </Form>
-              ) : (
-                <div className="space-y-2">
-                  <p><strong>Name:</strong> {registrationData.school.name}</p>
-                  <p><strong>Address:</strong> {registrationData.school.address}</p>
-                  <p><strong>City:</strong> {registrationData.school.city}</p>
-                  <p><strong>State:</strong> {registrationData.school.state}</p>
-                  <p><strong>Pincode:</strong> {registrationData.school.pincode}</p>
-                  <p><strong>Phone:</strong> {registrationData.school.phone}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
+        <div className="space-y-8">
           {/* Event Participants */}
           <Card>
             <CardHeader>
@@ -523,6 +411,14 @@ export default function Dashboard() {
                           <p><strong>Name:</strong> {participant.name}</p>
                           <p><strong>Email:</strong> {participant.email}</p>
                           <p><strong>Grade:</strong> {participant.grade}</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => handleEditParticipant(participant)}
+                          >
+                            Edit Details
+                          </Button>
                         </div>
                       ))}
                     </div>
