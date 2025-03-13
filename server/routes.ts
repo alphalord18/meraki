@@ -102,6 +102,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: "Invalid contact form data" });
     }
   });
+  
+  // Participants endpoints
+  app.get("/api/participants", async (req, res) => {
+    try {
+      const schoolId = req.query.schoolId;
+      if (!schoolId) {
+        return res.status(400).json({ message: "School ID is required" });
+      }
+      
+      const participants = await storage.getParticipantsBySchool(schoolId as string);
+      res.json(participants);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch participants" });
+    }
+  });
+  
+  app.put("/api/participants/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = participantFormSchema.parse(req.body);
+      const participant = await storage.updateParticipant(id, data);
+      res.json(participant);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid participant data" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

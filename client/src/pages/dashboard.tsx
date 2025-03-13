@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { schoolFormSchema, coordinatorFormSchema } from "@shared/schema";
+import { schoolFormSchema, coordinatorFormSchema, participantFormSchema } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import type { Event } from "@shared/schema";
 
@@ -18,7 +18,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingParticipant, setIsEditingParticipant] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<any>(null);
 
   // Add events query
   const { data: events } = useQuery<Event[]>({
@@ -32,6 +34,10 @@ export default function Dashboard() {
   const coordinatorForm = useForm({
     resolver: zodResolver(coordinatorFormSchema),
   });
+  
+  const participantForm = useForm({
+    resolver: zodResolver(participantFormSchema),
+  });
 
   useEffect(() => {
     const data = localStorage.getItem("registrationData");
@@ -41,6 +47,12 @@ export default function Dashboard() {
     }
 
     const parsed = JSON.parse(data);
+    
+    // If participants are not loaded yet, set a default empty array
+    if (!parsed.participants) {
+      parsed.participants = [];
+    }
+    
     setRegistrationData(parsed);
 
     // Set form default values
@@ -53,22 +65,48 @@ export default function Dashboard() {
     setLocation("/login");
   };
 
-  const handleSave = async (type: "school" | "coordinator") => {
+  const handleSave = async (type: "school" | "coordinator" | "participant") => {
     setIsSaving(true);
     try {
-      const form = type === "school" ? schoolForm : coordinatorForm;
-      const values = form.getValues();
-
-      const docRef = doc(db, "registrations", registrationData.id);
-      await updateDoc(docRef, {
-        [type]: values
-      });
-
+      let values;
+      let docRef;
+      let updated;
+      
+      if (type === "participant" && selectedParticipant) {
+        values = participantForm.getValues();
+        docRef = doc(db, "participants", selectedParticipant.id);
+        await updateDoc(docRef, values);
+        
+        // Update local storage - find and replace the participant
+        const updatedParticipants = registrationData.participants.map((p: any) => 
+          p.id === selectedParticipant.id ? { ...p, ...values } : p
+        );
+        
+        updated = {
+          ...registrationData,
+          participants: updatedParticipants
+        };
+        
+        setIsEditingParticipant(false);
+      } else {
+        // Handle school/coordinator as before
+        const form = type === "school" ? schoolForm : coordinatorForm;
+        values = form.getValues();
+        
+        docRef = doc(db, "registrations", registrationData.id);
+        await updateDoc(docRef, {
+          [type]: values
+        });
+        
+        updated = {
+          ...registrationData,
+          [type]: values
+        };
+        
+        setIsEditing(false);
+      }
+      
       // Update local storage
-      const updated = {
-        ...registrationData,
-        [type]: values
-      };
       localStorage.setItem("registrationData", JSON.stringify(updated));
       setRegistrationData(updated);
 
@@ -76,7 +114,6 @@ export default function Dashboard() {
         title: "Changes Saved",
         description: `${type.charAt(0).toUpperCase() + type.slice(1)} details updated successfully.`
       });
-      setIsEditing(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -86,6 +123,12 @@ export default function Dashboard() {
     } finally {
       setIsSaving(false);
     }
+  };
+  
+  const handleEditParticipant = (participant: any) => {
+    setSelectedParticipant(participant);
+    participantForm.reset(participant);
+    setIsEditingParticipant(true);
   };
 
   if (!registrationData) {
@@ -240,6 +283,104 @@ export default function Dashboard() {
                   </div>
                 );
               })}
+            </CardContent>
+          </Card>
+
+          {/* Participants Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Registered Participants</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditingParticipant && selectedParticipant ? (
+                <Form {...participantForm}>
+                  <form onSubmit={participantForm.handleSubmit(() => handleSave("participant"))} className="space-y-4">
+                    <FormField
+                      control={participantForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={participantForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={participantForm.control}
+                      name="grade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Grade</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex space-x-2">
+                      <Button type="submit" disabled={isSaving}>
+                        {isSaving ? "Saving..." : "Save Changes"}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsEditingParticipant(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              ) : (
+                <>
+                  {registrationData.participants && registrationData.participants.length > 0 ? (
+                    <div className="space-y-4">
+                      {registrationData.participants.map((participant: any, index: number) => (
+                        <div key={index} className="border p-4 rounded-md">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-medium">{participant.name}</h3>
+                              <p className="text-sm text-gray-500">{participant.email}</p>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditParticipant(participant)}
+                            >
+                              Edit
+                            </Button>
+                          </div>
+                          <div className="text-sm">
+                            <p><strong>Grade:</strong> {participant.grade}</p>
+                            {participant.details && Object.entries(participant.details).map(([key, value]: [string, any]) => (
+                              <p key={key}><strong>{key}:</strong> {value.toString()}</p>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No participants registered yet.</p>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
