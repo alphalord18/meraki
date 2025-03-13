@@ -14,10 +14,10 @@ export default function Home() {
           muted
           playsInline
           className="absolute w-full h-full object-cover"
-          style={{ filter: 'brightness(0.6)' }}
+          style={{ filter: 'brightness(0.4)' }}
         >
           <source
-            src="https://player.vimeo.com/external/434045526.sd.mp4?s=c27ebe20bf0a6f895f9f000d0881ee45555e9b8c&profile_id=164&oauth2_token_id=57447761"
+            src="https://player.vimeo.com/progressive_redirect/playback/819843905/rendition/1080p/file.mp4?loc=external&signature=e37e7d3f6a7f56a9b76ab9c9f8e1663dba67dc8d7c00e8c31ad6b11a4df6ff40"
             type="video/mp4"
           />
           Your browser does not support the video tag.
@@ -45,7 +45,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/events">
-                <Button variant="outline" className="border-white text-white hover:bg-white/20 px-8 py-6 w-full sm:w-auto">
+                <Button variant="outline" className="border-2 border-white text-white hover:bg-white/20 px-8 py-6 w-full sm:w-auto">
                   View Events
                 </Button>
               </Link>
