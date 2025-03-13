@@ -12,12 +12,20 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Event } from "@shared/schema";
 import { motion, AnimatePresence } from "framer-motion";
+import { db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { generatePassword } from "@/lib/utils";
 
 type RegistrationStep = "school" | "coordinator" | "events" | "participants" | "confirmation";
 
 export default function Register() {
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("school");
-  const [registrationData, setRegistrationData] = useState({
+  const [registrationData, setRegistrationData] = useState<{
+    school: any;
+    coordinator: any;
+    selectedEvents: number[];
+    participants: Record<number, any[]>;
+  }>({
     school: null,
     coordinator: null,
     selectedEvents: [],
@@ -38,12 +46,16 @@ export default function Register() {
     resolver: zodResolver(coordinatorFormSchema),
   });
 
-  const handleSchoolSubmit = (data) => {
+  const participantForm = useForm({
+    resolver: zodResolver(participantFormSchema),
+  });
+
+  const handleSchoolSubmit = (data: any) => {
     setRegistrationData(prev => ({ ...prev, school: data }));
     setCurrentStep("coordinator");
   };
 
-  const handleCoordinatorSubmit = (data) => {
+  const handleCoordinatorSubmit = (data: any) => {
     setRegistrationData(prev => ({ ...prev, coordinator: data }));
     setCurrentStep("events");
   };
@@ -53,13 +65,46 @@ export default function Register() {
       ...prev,
       selectedEvents: prev.selectedEvents.includes(eventId)
         ? prev.selectedEvents.filter(id => id !== eventId)
-        : [...prev.selectedEvents, eventId]
+        : [...prev.selectedEvents, eventId],
+      participants: prev.selectedEvents.includes(eventId)
+        ? Object.fromEntries(Object.entries(prev.participants).filter(([key]) => key !== eventId.toString()))
+        : prev.participants
     }));
   };
 
+  const handleParticipantSubmit = (eventId: number, data: any) => {
+    setRegistrationData(prev => ({
+      ...prev,
+      participants: {
+        ...prev.participants,
+        [eventId]: [...(prev.participants[eventId] || []), data]
+      }
+    }));
+    participantForm.reset();
+  };
+
   const { mutate: submitRegistration, isPending } = useMutation({
-    mutationFn: async (data) => {
-      await apiRequest("POST", "/api/register", data);
+    mutationFn: async (data: any) => {
+      // Generate password for coordinator
+      const password = generatePassword();
+
+      // Store in Firebase
+      const docRef = await addDoc(collection(db, "registrations"), {
+        ...data,
+        coordinator: {
+          ...data.coordinator,
+          password
+        },
+        createdAt: new Date()
+      });
+
+      // Send coordinator credentials via API
+      await apiRequest("POST", "/api/send-coordinator-credentials", {
+        email: data.coordinator.email,
+        password
+      });
+
+      return docRef;
     },
     onSuccess: () => {
       toast({
@@ -69,6 +114,7 @@ export default function Register() {
       // Reset forms and state
       schoolForm.reset();
       coordinatorForm.reset();
+      participantForm.reset();
       setRegistrationData({
         school: null,
         coordinator: null,
@@ -85,6 +131,21 @@ export default function Register() {
       });
     }
   });
+
+  const selectedEvent = events?.find(event => 
+    registrationData.selectedEvents.includes(event.id) && 
+    (!registrationData.participants[event.id] || 
+     registrationData.participants[event.id].length < event.maxParticipants)
+  );
+
+  const isEventCompleted = (eventId: number) => {
+    const event = events?.find(e => e.id === eventId);
+    return event && registrationData.participants[eventId]?.length === event.maxParticipants;
+  };
+
+  const allParticipantsAdded = registrationData.selectedEvents.every(eventId => 
+    isEventCompleted(eventId)
+  );
 
   return (
     <div className="container mx-auto py-12">
@@ -116,7 +177,71 @@ export default function Register() {
                           </FormItem>
                         )}
                       />
-                      {/* Add other school form fields */}
+                      <FormField
+                        control={schoolForm.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={schoolForm.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={schoolForm.control}
+                        name="state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={schoolForm.control}
+                        name="pincode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pincode</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={schoolForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <Button type="submit">Next</Button>
                     </form>
                   </Form>
@@ -144,7 +269,32 @@ export default function Register() {
                           </FormItem>
                         )}
                       />
-                      {/* Add other coordinator form fields */}
+                      <FormField
+                        control={coordinatorForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={coordinatorForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <div className="flex justify-between">
                         <Button type="button" variant="outline" onClick={() => setCurrentStep("school")}>
                           Back
@@ -170,6 +320,9 @@ export default function Register() {
                           <div>
                             <h4 className="font-medium">{event.title}</h4>
                             <p className="text-sm text-gray-600">{event.description}</p>
+                            <p className="text-sm text-gray-500">
+                              Max Participants: {event.maxParticipants}
+                            </p>
                           </div>
                           <Button
                             variant={registrationData.selectedEvents.includes(event.id) ? "default" : "outline"}
@@ -195,8 +348,152 @@ export default function Register() {
                 </motion.div>
               )}
 
-              {/* Add participants step */}
-              {/* Add confirmation step */}
+              {currentStep === "participants" && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  {selectedEvent ? (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">
+                        Add Participants for {selectedEvent.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Participants added: {registrationData.participants[selectedEvent.id]?.length || 0} 
+                        / {selectedEvent.maxParticipants}
+                      </p>
+
+                      <Form {...participantForm}>
+                        <form onSubmit={participantForm.handleSubmit(data => 
+                          handleParticipantSubmit(selectedEvent.id, data)
+                        )} className="space-y-4">
+                          <FormField
+                            control={participantForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={participantForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                  <Input type="email" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={participantForm.control}
+                            name="grade"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Grade</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit">Add Participant</Button>
+                        </form>
+                      </Form>
+
+                      <div className="flex justify-between mt-8">
+                        <Button variant="outline" onClick={() => setCurrentStep("events")}>
+                          Back to Events
+                        </Button>
+                        {allParticipantsAdded && (
+                          <Button onClick={() => setCurrentStep("confirmation")}>
+                            Review & Submit
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <h3 className="text-lg font-semibold mb-4">All participants added!</h3>
+                      <Button onClick={() => setCurrentStep("confirmation")}>
+                        Review & Submit
+                      </Button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {currentStep === "confirmation" && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                >
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">School Details</h3>
+                      <div className="bg-gray-50 p-4 rounded">
+                        <p><strong>Name:</strong> {registrationData.school.name}</p>
+                        <p><strong>Address:</strong> {registrationData.school.address}</p>
+                        <p><strong>City:</strong> {registrationData.school.city}</p>
+                        <p><strong>State:</strong> {registrationData.school.state}</p>
+                        <p><strong>Pincode:</strong> {registrationData.school.pincode}</p>
+                        <p><strong>Phone:</strong> {registrationData.school.phone}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Coordinator Details</h3>
+                      <div className="bg-gray-50 p-4 rounded">
+                        <p><strong>Name:</strong> {registrationData.coordinator.name}</p>
+                        <p><strong>Email:</strong> {registrationData.coordinator.email}</p>
+                        <p><strong>Phone:</strong> {registrationData.coordinator.phone}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Selected Events & Participants</h3>
+                      {events?.filter(event => registrationData.selectedEvents.includes(event.id))
+                        .map(event => (
+                          <div key={event.id} className="bg-gray-50 p-4 rounded mb-4">
+                            <h4 className="font-medium mb-2">{event.title}</h4>
+                            <div className="space-y-2">
+                              {registrationData.participants[event.id]?.map((participant, index) => (
+                                <div key={index} className="pl-4 border-l-2 border-gray-300">
+                                  <p><strong>Name:</strong> {participant.name}</p>
+                                  <p><strong>Email:</strong> {participant.email}</p>
+                                  <p><strong>Grade:</strong> {participant.grade}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button variant="outline" onClick={() => setCurrentStep("participants")}>
+                        Back
+                      </Button>
+                      <Button 
+                        onClick={() => submitRegistration(registrationData)}
+                        disabled={isPending}
+                      >
+                        {isPending ? "Submitting..." : "Submit Registration"}
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </CardContent>
         </Card>
