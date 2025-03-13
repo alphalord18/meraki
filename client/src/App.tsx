@@ -11,6 +11,8 @@ import Blog from "@/pages/blog";
 import Speakers from "@/pages/speakers";
 import Sponsors from "@/pages/sponsors";
 import Contact from "@/pages/contact";
+import Login from "@/pages/login";
+import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +28,8 @@ function Router() {
           <Route path="/speakers" component={Speakers} />
           <Route path="/sponsors" component={Sponsors} />
           <Route path="/contact" component={Contact} />
+          <Route path="/login" component={Login} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route component={NotFound} />
         </Switch>
       </main>

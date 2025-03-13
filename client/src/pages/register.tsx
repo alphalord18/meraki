@@ -112,6 +112,20 @@ export default function Register() {
       // Create document ID from school name and address
       const docId = `${data.school.name}_${data.school.address}`.replace(/[^a-zA-Z0-9]/g, '_');
 
+      // Prepare event data with full details
+      const eventParticipants = {};
+      data.selectedEvents.forEach(eventId => {
+        const event = events?.find(e => e.id === eventId);
+        eventParticipants[eventId] = {
+          eventDetails: {
+            title: event?.title,
+            category: event?.category,
+            maxParticipants: event?.maxParticipants
+          },
+          participants: data.participants[eventId] || []
+        };
+      });
+
       // Store in Firebase with custom document ID
       const registrationsRef = collection(db, "registrations");
       const docRef = await addDoc(registrationsRef, {
@@ -120,8 +134,9 @@ export default function Register() {
           ...data.coordinator,
           password
         },
+        events: eventParticipants,
         createdAt: new Date(),
-        documentId: docId // Store the ID in the document as well
+        documentId: docId
       });
 
       // Send coordinator credentials via API
@@ -158,10 +173,10 @@ export default function Register() {
     }
   });
 
-  const selectedEvent = events?.find(event => 
-    registrationData.selectedEvents.includes(event.id) && 
-    (!registrationData.participants[event.id] || 
-     registrationData.participants[event.id].length < event.maxParticipants)
+  const selectedEvent = events?.find(event =>
+    registrationData.selectedEvents.includes(event.id) &&
+    (!registrationData.participants[event.id] ||
+      registrationData.participants[event.id].length < event.maxParticipants)
   );
 
   const isEventCompleted = (eventId: number) => {
@@ -169,7 +184,7 @@ export default function Register() {
     return event && registrationData.participants[eventId]?.length === event.maxParticipants;
   };
 
-  const allParticipantsAdded = registrationData.selectedEvents.every(eventId => 
+  const allParticipantsAdded = registrationData.selectedEvents.every(eventId =>
     isEventCompleted(eventId)
   );
 
@@ -303,9 +318,9 @@ export default function Register() {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="email" 
-                                {...field} 
+                              <Input
+                                type="email"
+                                {...field}
                                 onChange={(e) => {
                                   field.onChange(e);
                                   coordinatorForm.trigger("email");
@@ -394,12 +409,12 @@ export default function Register() {
                         Add Participants for {selectedEvent.title}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Participants added: {registrationData.participants[selectedEvent.id]?.length || 0} 
+                        Participants added: {registrationData.participants[selectedEvent.id]?.length || 0}
                         / {selectedEvent.maxParticipants}
                       </p>
 
                       <Form {...participantForm}>
-                        <form onSubmit={participantForm.handleSubmit(data => 
+                        <form onSubmit={participantForm.handleSubmit(data =>
                           handleParticipantSubmit(selectedEvent.id, data)
                         )} className="space-y-4">
                           <FormField
@@ -422,8 +437,8 @@ export default function Register() {
                               <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="email" 
+                                  <Input
+                                    type="email"
                                     {...field}
                                     onChange={(e) => {
                                       field.onChange(e);
@@ -525,7 +540,7 @@ export default function Register() {
                       <Button variant="outline" onClick={() => setCurrentStep("participants")}>
                         Back
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => submitRegistration(registrationData)}
                         disabled={isPending}
                       >

@@ -45,7 +45,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/events">
-                <Button variant="outline" className="border-2 border-white text-white hover:bg-white/20 px-8 py-6 w-full sm:w-auto">
+                <Button className="bg-white text-[#2E4A7D] hover:bg-white/90 px-8 py-6 w-full sm:w-auto">
                   View Events
                 </Button>
               </Link>

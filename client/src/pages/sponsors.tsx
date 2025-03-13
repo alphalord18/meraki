@@ -38,6 +38,16 @@ const sponsorshipPackages = [
   }
 ];
 
+// Past sponsors data
+const pastSponsors = [
+  { id: 1, name: "TechCorp", logo: "https://picsum.photos/100?random=1" },
+  { id: 2, name: "InnovateLabs", logo: "https://picsum.photos/100?random=2" },
+  { id: 3, name: "FutureWorks", logo: "https://picsum.photos/100?random=3" },
+  { id: 4, name: "CreativeMinds", logo: "https://picsum.photos/100?random=4" },
+  { id: 5, name: "DigitalDreams", logo: "https://picsum.photos/100?random=5" },
+  { id: 6, name: "GlobalTech", logo: "https://picsum.photos/100?random=6" }
+];
+
 export default function Sponsors() {
   const { data: sponsors, isLoading } = useQuery<Sponsor[]>({
     queryKey: ["/api/sponsors"],
@@ -71,6 +81,27 @@ export default function Sponsors() {
         </p>
       </div>
 
+      {/* Past Sponsors Marquee */}
+      <div className="mb-16">
+        <h2 className="text-2xl font-bold mb-6 text-center">Past Sponsors</h2>
+        <div className="relative overflow-hidden py-8 bg-gray-50">
+          <div className="flex animate-marquee">
+            {[...pastSponsors, ...pastSponsors].map((sponsor, index) => (
+              <div
+                key={`${sponsor.id}-${index}`}
+                className="flex-shrink-0 mx-8"
+              >
+                <img
+                  src={sponsor.logo}
+                  alt={sponsor.name}
+                  className="h-16 w-16 object-contain"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Sponsorship Packages */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
         {sponsorshipPackages.map((pkg, index) => (
@@ -85,8 +116,8 @@ export default function Sponsors() {
                 <CardTitle className="text-2xl">{pkg.tier}</CardTitle>
                 <div className="text-3xl font-bold text-[#2E4A7D] my-4">{pkg.price}</div>
               </CardHeader>
-              <CardContent className="flex-grow">
-                <ul className="text-left space-y-3">
+              <CardContent className="flex-grow flex flex-col">
+                <ul className="text-left space-y-3 flex-grow">
                   {pkg.benefits.map((benefit, i) => (
                     <li key={i} className="flex items-center gap-2">
                       <span className="text-[#2E4A7D]">✓</span>
@@ -94,8 +125,8 @@ export default function Sponsors() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/contact">
-                  <Button className="w-full mt-6">Contact Us</Button>
+                <Link href="/contact" className="mt-6">
+                  <Button className="w-full">Contact Us</Button>
                 </Link>
               </CardContent>
             </Card>
