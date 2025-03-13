@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertEventSchema, insertBlogPostSchema, insertSpeakerSchema, insertSponsorSchema } from "@shared/schema";
+import { insertEventSchema, insertBlogPostSchema, insertSpeakerSchema, insertSponsorSchema, schoolFormSchema, participantFormSchema } from "@shared/schema";
 import { z } from "zod";
 
 const contactSchema = z.object({
@@ -103,6 +103,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Schools endpoints
+  app.get("/api/schools/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const school = await storage.getSchool(id);
+      if (!school) {
+        return res.status(404).json({ message: "School not found" });
+      }
+      res.json(school);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch school" });
+    }
+  });
+  
+  app.put("/api/schools/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = schoolFormSchema.parse(req.body);
+      const school = await storage.updateSchool(id, data);
+      res.json(school);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid school data" });
+    }
+  });
+
   // Participants endpoints
   app.get("/api/participants", async (req, res) => {
     try {
