@@ -6,16 +6,26 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section 
-        className="h-screen relative bg-cover bg-center"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1525022083939-c1c6840f06c3?auto=format&fit=crop&q=80')",
-        }}
-      >
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#2E4A7D]/90 to-transparent" />
+      <section className="h-screen relative overflow-hidden">
+        {/* Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          className="absolute w-full h-full object-cover"
+          style={{ filter: 'brightness(0.7)' }}
+        >
+          <source
+            src="https://player.vimeo.com/external/434045526.sd.mp4?s=c27ebe20bf0a6f895f9f000d0881ee45555e9b8c&profile_id=164&oauth2_token_id=57447761"
+            type="video/mp4"
+          />
+          Your browser does not support the video tag.
+        </video>
 
-        <div className="container mx-auto h-full flex items-center relative">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#2E4A7D]/80 to-transparent z-10" />
+
+        <div className="container mx-auto h-full flex items-center relative z-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -35,7 +45,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/events">
-                <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-6">
+                <Button variant="outline" className="border-white text-white hover:bg-white/20 px-8 py-6">
                   View Events
                 </Button>
               </Link>
