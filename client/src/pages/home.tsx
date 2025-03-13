@@ -12,8 +12,9 @@ export default function Home() {
           autoPlay
           loop
           muted
+          playsInline
           className="absolute w-full h-full object-cover"
-          style={{ filter: 'brightness(0.7)' }}
+          style={{ filter: 'brightness(0.6)' }}
         >
           <source
             src="https://player.vimeo.com/external/434045526.sd.mp4?s=c27ebe20bf0a6f895f9f000d0881ee45555e9b8c&profile_id=164&oauth2_token_id=57447761"
@@ -22,7 +23,6 @@ export default function Home() {
           Your browser does not support the video tag.
         </video>
 
-        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#2E4A7D]/80 to-transparent z-10" />
 
         <div className="container mx-auto h-full flex items-center relative z-20">
@@ -38,14 +38,14 @@ export default function Home() {
             <p className="text-2xl mb-8">
               Where Creativity Meets Expression
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/register">
-                <Button className="bg-white text-[#2E4A7D] hover:bg-white/90 px-8 py-6">
+                <Button className="bg-white text-[#2E4A7D] hover:bg-white/90 px-8 py-6 w-full sm:w-auto">
                   Register Now
                 </Button>
               </Link>
               <Link href="/events">
-                <Button variant="outline" className="border-white text-white hover:bg-white/20 px-8 py-6">
+                <Button variant="outline" className="border-white text-white hover:bg-white/20 px-8 py-6 w-full sm:w-auto">
                   View Events
                 </Button>
               </Link>
