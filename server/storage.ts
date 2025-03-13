@@ -6,8 +6,9 @@ import {
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc } from "firebase/firestore";
 
-// Firebase Configuration (REPLACE WITH YOUR ACTUAL CONFIG)
+// Firebase Configuration 
 const firebaseConfig = {
+  projectId: "merakifest-d9822",
   // ... your firebase config ...
 };
 

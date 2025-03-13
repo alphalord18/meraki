@@ -62,6 +62,38 @@ export default function Dashboard() {
     
     fetchSchoolData();
   }, [registrationData]);
+  
+  // Function to update school details
+  const updateSchoolDetails = async (data) => {
+    try {
+      if (registrationData?.schoolId) {
+        const schoolRef = doc(db, "schools", registrationData.schoolId);
+        await updateDoc(schoolRef, {
+          name: data.name,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          pincode: data.pincode,
+          phone: data.phone
+        });
+        
+        toast({
+          title: "Success",
+          description: "School details updated successfully!",
+        });
+        
+        // Update local state
+        setSchoolData({ id: registrationData.schoolId, ...data });
+      }
+    } catch (error) {
+      console.error("Error updating school data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update school details.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const coordinatorForm = useForm({
     resolver: zodResolver(coordinatorFormSchema),
