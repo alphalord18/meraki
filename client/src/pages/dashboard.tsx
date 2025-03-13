@@ -7,12 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { schoolFormSchema, coordinatorFormSchema, participantFormSchema } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-import type { Event, School } from "@shared/schema";
-import axios from "axios";
+import type { Event } from "@shared/schema";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -22,7 +21,6 @@ export default function Dashboard() {
   const [isEditingParticipant, setIsEditingParticipant] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState<any>(null);
-  const [schoolData, setSchoolData] = useState<School | null>(null);
 
   // Add events query
   const { data: events } = useQuery<Event[]>({
@@ -31,74 +29,12 @@ export default function Dashboard() {
 
   const schoolForm = useForm({
     resolver: zodResolver(schoolFormSchema),
-    defaultValues: {
-      name: "",
-      address: "",
-      city: "",
-      state: "",
-      pincode: "",
-      phone: ""
-    }
   });
-
-  // Load school data
-  useEffect(() => {
-    const fetchSchoolData = async () => {
-      if (registrationData?.schoolId) {
-        try {
-          const schoolRef = doc(db, "schools", registrationData.schoolId);
-          const schoolSnap = await getDoc(schoolRef);
-
-          if (schoolSnap.exists()) {
-            const data = { id: schoolSnap.id, ...schoolSnap.data() } as School;
-            setSchoolData(data);
-            schoolForm.reset(data);
-          }
-        } catch (error) {
-          console.error("Error fetching school data:", error);
-        }
-      }
-    };
-
-    fetchSchoolData();
-  }, [registrationData]);
-
-  // Function to update school details
-  const updateSchoolDetails = async (data) => {
-    try {
-      if (registrationData?.schoolId) {
-        const schoolRef = doc(db, "schools", registrationData.schoolId);
-        await updateDoc(schoolRef, {
-          name: data.name,
-          address: data.address,
-          city: data.city,
-          state: data.state,
-          pincode: data.pincode,
-          phone: data.phone
-        });
-
-        toast({
-          title: "Success",
-          description: "School details updated successfully!",
-        });
-
-        // Update local state
-        setSchoolData({ id: registrationData.schoolId, ...data });
-      }
-    } catch (error) {
-      console.error("Error updating school data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update school details.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const coordinatorForm = useForm({
     resolver: zodResolver(coordinatorFormSchema),
   });
-
+  
   const participantForm = useForm({
     resolver: zodResolver(participantFormSchema),
   });
@@ -111,12 +47,12 @@ export default function Dashboard() {
     }
 
     const parsed = JSON.parse(data);
-
+    
     // If participants are not loaded yet, set a default empty array
     if (!parsed.participants) {
       parsed.participants = [];
     }
-
+    
     setRegistrationData(parsed);
 
     // Set form default values
@@ -135,41 +71,41 @@ export default function Dashboard() {
       let values;
       let docRef;
       let updated;
-
+      
       if (type === "participant" && selectedParticipant) {
         values = participantForm.getValues();
         docRef = doc(db, "participants", selectedParticipant.id);
         await updateDoc(docRef, values);
-
+        
         // Update local storage - find and replace the participant
         const updatedParticipants = registrationData.participants.map((p: any) => 
           p.id === selectedParticipant.id ? { ...p, ...values } : p
         );
-
+        
         updated = {
           ...registrationData,
           participants: updatedParticipants
         };
-
+        
         setIsEditingParticipant(false);
       } else {
         // Handle school/coordinator as before
         const form = type === "school" ? schoolForm : coordinatorForm;
         values = form.getValues();
-
+        
         docRef = doc(db, "registrations", registrationData.id);
         await updateDoc(docRef, {
           [type]: values
         });
-
+        
         updated = {
           ...registrationData,
           [type]: values
         };
-
+        
         setIsEditing(false);
       }
-
+      
       // Update local storage
       localStorage.setItem("registrationData", JSON.stringify(updated));
       setRegistrationData(updated);
@@ -188,120 +124,11 @@ export default function Dashboard() {
       setIsSaving(false);
     }
   };
-
-  const handleEditSchool = () => {
-    setIsEditing(true);
-    if (schoolData) {
-      schoolForm.reset(schoolData);
-    }
-  };
-
-  const handleSaveSchool = async (data: any) => {
-    if (!registrationData?.schoolId) return;
-
-    setIsSaving(true);
-    try {
-      // Update in Firebase
-      const schoolRef = doc(db, "schools", registrationData.schoolId);
-      await updateDoc(schoolRef, data);
-
-      // Update in API if available
-      try {
-        await axios.put(`/api/schools/${registrationData.schoolId}`, data);
-      } catch (apiError) {
-        console.warn("API update failed, but Firebase update succeeded:", apiError);
-      }
-
-      setSchoolData({ ...schoolData, ...data } as School);
-      setIsEditing(false);
-
-      toast({
-        title: "School Updated",
-        description: "School details have been updated successfully."
-      });
-    } catch (error) {
-      console.error("Error updating school:", error);
-      toast({
-        title: "Update Failed",
-        description: "Failed to update school details. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle editing participant details
+  
   const handleEditParticipant = (participant: any) => {
     setSelectedParticipant(participant);
-    participantForm.reset({
-      name: participant.name,
-      email: participant.email,
-      grade: participant.grade
-    });
+    participantForm.reset(participant);
     setIsEditingParticipant(true);
-  };
-
-  // Save edited participant
-  const saveParticipant = async (data: any) => {
-    if (!selectedParticipant) return;
-
-    setIsSaving(true);
-    try {
-      // Find which event this participant belongs to
-      let eventId: string | null = null;
-      let participantIndex: number = -1;
-
-      // Look through each event's participants
-      for (const [evtId, participants] of Object.entries(registrationData.participants)) {
-        const index = (participants as any[]).findIndex(p => 
-          p.name === selectedParticipant.name && 
-          p.email === selectedParticipant.email
-        );
-
-        if (index !== -1) {
-          eventId = evtId;
-          participantIndex = index;
-          break;
-        }
-      }
-
-      if (eventId !== null && participantIndex !== -1) {
-        // Update the participant in the local state
-        const updatedParticipants = [...registrationData.participants[eventId]];
-        updatedParticipants[participantIndex] = { ...data };
-
-        const updatedRegistrationData = {
-          ...registrationData,
-          participants: {
-            ...registrationData.participants,
-            [eventId]: updatedParticipants
-          }
-        };
-
-        // Update in Firebase if needed
-        if (selectedParticipant.id) {
-          await axios.put(`/api/participants/firebase/${selectedParticipant.id}`, data);
-        }
-
-        setRegistrationData(updatedRegistrationData);
-        toast({
-          title: "Success",
-          description: "Participant details updated successfully",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating participant:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update participant details",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-      setIsEditingParticipant(false);
-      setSelectedParticipant(null);
-    }
   };
 
   if (!registrationData) {
@@ -316,21 +143,24 @@ export default function Dashboard() {
           <Button variant="outline" onClick={handleLogout}>Logout</Button>
         </div>
 
-        {/* School Details Card */}
-        <Card className="mb-8 bg-white">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>School Details</CardTitle>
-            {!isEditing && (
-              <Button size="sm" onClick={handleEditSchool}>
-                Edit School Details
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            {isEditing ? (
-              <Form {...schoolForm}>
-                <form onSubmit={schoolForm.handleSubmit(handleSaveSchool)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-8">
+          {/* School Details */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>School Details</CardTitle>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(!isEditing)}
+                >
+                  {isEditing ? "Cancel" : "Edit"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <Form {...schoolForm}>
+                  <form onSubmit={schoolForm.handleSubmit(() => handleSave("school"))} className="space-y-4">
                     <FormField
                       control={schoolForm.control}
                       name="name"
@@ -346,22 +176,9 @@ export default function Dashboard() {
                     />
                     <FormField
                       control={schoolForm.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={schoolForm.control}
                       name="address"
                       render={({ field }) => (
-                        <FormItem className="md:col-span-2">
+                        <FormItem>
                           <FormLabel>Address</FormLabel>
                           <FormControl>
                             <Input {...field} />
@@ -409,55 +226,37 @@ export default function Dashboard() {
                         </FormItem>
                       )}
                     />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsEditing(false)}
-                      disabled={isSaving}
-                    >
-                      Cancel
-                    </Button>
+                    <FormField
+                      control={schoolForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <Button type="submit" disabled={isSaving}>
                       {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
-                  </div>
-                </form>
-              </Form>
-            ) : (
-              <dl className="grid grid-cols-1 md:grid-cols-2 gap-y-3">
-                <div>
-                  <dt className="text-sm text-gray-500">School Name</dt>
-                  <dd className="font-medium">{schoolData?.name || "-"}</dd>
+                  </form>
+                </Form>
+              ) : (
+                <div className="space-y-2">
+                  <p><strong>Name:</strong> {registrationData.school.name}</p>
+                  <p><strong>Address:</strong> {registrationData.school.address}</p>
+                  <p><strong>City:</strong> {registrationData.school.city}</p>
+                  <p><strong>State:</strong> {registrationData.school.state}</p>
+                  <p><strong>Pincode:</strong> {registrationData.school.pincode}</p>
+                  <p><strong>Phone:</strong> {registrationData.school.phone}</p>
                 </div>
-                <div>
-                  <dt className="text-sm text-gray-500">Phone</dt>
-                  <dd className="font-medium">{schoolData?.phone || "-"}</dd>
-                </div>
-                <div className="md:col-span-2">
-                  <dt className="text-sm text-gray-500">Address</dt>
-                  <dd className="font-medium">{schoolData?.address || "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-500">City</dt>
-                  <dd className="font-medium">{schoolData?.city || "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-500">State</dt>
-                  <dd className="font-medium">{schoolData?.state || "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-500">Pincode</dt>
-                  <dd className="font-medium">{schoolData?.pincode || "-"}</dd>
-                </div>
-              </dl>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
 
-
-        <div className="space-y-8">
           {/* Event Participants */}
           <Card>
             <CardHeader>
@@ -478,14 +277,6 @@ export default function Dashboard() {
                           <p><strong>Name:</strong> {participant.name}</p>
                           <p><strong>Email:</strong> {participant.email}</p>
                           <p><strong>Grade:</strong> {participant.grade}</p>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => handleEditParticipant(participant)}
-                          >
-                            Edit Details
-                          </Button>
                         </div>
                       ))}
                     </div>
@@ -503,7 +294,7 @@ export default function Dashboard() {
             <CardContent>
               {isEditingParticipant && selectedParticipant ? (
                 <Form {...participantForm}>
-                  <form onSubmit={participantForm.handleSubmit(saveParticipant)} className="space-y-4">
+                  <form onSubmit={participantForm.handleSubmit(() => handleSave("participant"))} className="space-y-4">
                     <FormField
                       control={participantForm.control}
                       name="name"

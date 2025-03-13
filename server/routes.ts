@@ -1,9 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertEventSchema, insertBlogPostSchema, insertSpeakerSchema, insertSponsorSchema, schoolFormSchema, participantFormSchema } from "@shared/schema";
+import { insertEventSchema, insertBlogPostSchema, insertSpeakerSchema, insertSponsorSchema } from "@shared/schema";
 import { z } from "zod";
-import { adminDb } from "./firebase-admin"; // Added import for Firebase Admin SDK
 
 const contactSchema = z.object({
   name: z.string(),
@@ -103,32 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: "Invalid contact form data" });
     }
   });
-
-  // Schools endpoints
-  app.get("/api/schools/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
-      const school = await storage.getSchool(id);
-      if (!school) {
-        return res.status(404).json({ message: "School not found" });
-      }
-      res.json(school);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch school" });
-    }
-  });
-
-  app.put("/api/schools/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
-      const data = schoolFormSchema.parse(req.body);
-      const school = await storage.updateSchool(id, data);
-      res.json(school);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid school data" });
-    }
-  });
-
+  
   // Participants endpoints
   app.get("/api/participants", async (req, res) => {
     try {
@@ -136,14 +110,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!schoolId) {
         return res.status(400).json({ message: "School ID is required" });
       }
-
+      
       const participants = await storage.getParticipantsBySchool(schoolId as string);
       res.json(participants);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch participants" });
     }
   });
-
+  
   app.put("/api/participants/:id", async (req, res) => {
     try {
       const id = req.params.id;
@@ -154,38 +128,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: "Invalid participant data" });
     }
   });
-
-  // Firebase School Update Endpoint
-  app.put("/api/schools/firebase/:id", async (req, res) => { // Route for Firebase school update
-    try {
-      const { id } = req.params;
-      const schoolData = req.body;
-
-      const schoolRef = adminDb.collection("schools").doc(id);
-      await schoolRef.update(schoolData);
-
-      res.status(200).json({ success: true, message: "School updated successfully (Firebase)" });
-    } catch (error) {
-      console.error("Error updating school:", error);
-      res.status(500).json({ success: false, message: "Failed to update school (Firebase)" });
-    }
-  });
-
-  app.put("/api/participants/firebase/:id", async (req, res) => { // New route for Firebase participant update
-    try {
-      const { id } = req.params;
-      const participantData = req.body;
-
-      const participantRef = adminDb.collection("participants").doc(id);
-      await participantRef.update(participantData);
-
-      res.status(200).json({ success: true, message: "Participant updated successfully (Firebase)" });
-    } catch (error) {
-      console.error("Error updating participant:", error);
-      res.status(500).json({ success: false, message: "Failed to update participant (Firebase)" });
-    }
-  });
-
 
   const httpServer = createServer(app);
   return httpServer;

@@ -1,17 +1,15 @@
-
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 const serviceAccount = {
   type: "service_account",
-  project_id: "merakifest-d9822",
-  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDMVxd94HFtvrlW\nli2NfEjYWYdLS4n2nkGV/dlSQi8/WE2t1URvjpWV/oL9DlYPObYzwEbNDXQ79uYv\n6hk9tDVws0QXmCYovDQEUzK5TNCpTf7UXZlXbOdgHysq/IUm82y2mhFsBFIj16EZ\ngSBkqTdbqArJR9ZQg88guBeqCGMMH8BMcTl2AfuQg5Cx51shMagsV1uJ3kGIcUdU\n+8vnClqAJlv/lsnunSaqVTQ2DWoFpGvweGL4lC7sLlcvp7brbc2/eUidKkNMFVXl\nb6iq+QsUhLld8Dy1LuS1GRaxHRRM9wm6fzDPQLMEm5RAPe5X+55dhh0uByffpQnm\nbBtRsaW9AgMBAAECggEAK2Q8HhQU6inTyBYEbtTLUDv0vbG5Boh1I3GAHlZlG5W4\nCxesXGciDzO4Y53RexK1hPhJ4J3AhsJHf7m9qet0ZK4AoeUCh2htwFRdg1lTPvyL\nxlNo7lZ3LKN5wntUmCCdf4oodHBXc/qEYHrZ4t5HHdzJi5QIZ9kRmSBWkBoPVGGh\nM1ykfcj310RoXPqEAHhI5MAoU2SRC7eZeIVBPEMfo/1rTd6+bSQ2jzajG1A3FGpv\nNCdn35h3ICmwjXDLEvd9EFU6s/0SmVoOkJDi5PaMbDyEaRa38dKuj4ZxCsE7gb3p\nSDg7vZ1YpImc2h8Ij0Zp3Mj35ODSaJr147s4oLYNIQKBgQD45lzOHjMzNtcN+NM3\n/eL+N3z93Tr08ZObGrtVB1eSwGtCIiILYgT3IQoNsNqYn0h6/1K0vzXlfZol+6k1\n+loL7499jV6kLROOLBHKBGtHFJXeLpB02AomWrBAPiiBvefVsR9ijk6tYaRA3gCV\n/4sTLSA0zd8Y/i6yCtJpeUpaoQKBgQDSK1L4TlSWFNNdAFWVMUEzgVJWXIPyI9az\nwOeGIK1SxJAlzYGwZEUVBpVkTRjDZhU8x1xXUi6Bj+6+In+nyGQCfhwFNruVgtWU\nCnGos1bj+p4yEVirnzuE0sJpUQZwQvqQQzxZkAUNNoEAU1inZbd+5JObZ3W/yHrD\nQQru1LdxnQKBgQDvJKbWg72931sRWZnXmmCW0MmPQRh8b//abvy+3acOoUJs8E61\nkSAkMeJu9RWSvrftNZRJhc5LCTsqc3pJGpmaDjpX75SXOZgoab9N0qEgUm8MYsD5\nAvn9j/T4RMC2p7gwYVY+Y2zEuaQPjz4Q4M7HRfxDv+ozIUXMWwl/vcHrAQKBgBDk\nAHgKO4wQQmhgBYDHA5lzFD3yk3wbWz75CuJhr+xN9dPD719Qv6iP7eOwuoPBqYVH\n9GjkJu6staA8P4wpc7grkG7u1iaO7EFIkZfgSeRqmNonQLwSQQNMuOkj5OOSznZX\noPsFsxI7xiRTjnVtnFCraB1+NB1krFES4iENoWyVAoGBANvMhOx9wt2kX2r2loYc\nHW+dcKDlybloUAhAJv7OV8o7yuCtXqEukqSVxFx3iZYfcUbkUH1tZ0oRKaNmjdw7\ntREkgbzKfuzQoUOfnbX2jVW8qA6rN3RGiesbM0KspVSasH8rvOeSPoiG5HUIVbPF\nzfJ6sPF0dWYlHCwyF8sjRvL0\n-----END PRIVATE KEY-----\n",
   client_email: "firebase-adminsdk-fbsvc@merakifest-d9822.iam.gserviceaccount.com",
+  project_id: process.env.VITE_FIREBASE_PROJECT_ID,
 };
 
 const adminApp = initializeApp({
   credential: cert(serviceAccount),
-  projectId: "merakifest-d9822"
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID
 });
 
 export const adminDb = getFirestore(adminApp);

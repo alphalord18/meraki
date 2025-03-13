@@ -4,11 +4,10 @@ import {
   type Participant, type InsertParticipant
 } from "@shared/schema";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc } from "firebase/firestore";
 
-// Firebase Configuration 
+// Firebase Configuration (REPLACE WITH YOUR ACTUAL CONFIG)
 const firebaseConfig = {
-  projectId: "merakifest-d9822",
   // ... your firebase config ...
 };
 
@@ -41,10 +40,6 @@ export interface IStorage {
   getAllSponsors(): Promise<Sponsor[]>;
   getSponsor(id: number): Promise<Sponsor | undefined>;
   createSponsor(sponsor: InsertSponsor): Promise<Sponsor>;
-  
-  // School operations
-  getSchool(id: string): Promise<School | undefined>;
-  updateSchool(id: string, data: Partial<School>): Promise<School>;
 
   // Participant operations
   getParticipantsBySchool(schoolId: string): Promise<Participant[]>;
@@ -172,29 +167,6 @@ export class FirebaseStorage implements IStorage {
   async createParticipant(participantData:InsertParticipant): Promise<Participant>{
     const docRef = await addDoc(collection(db, "participants"), participantData);
     return {id: docRef.id, ...participantData} as Participant;
-  }
-  
-  async getSchool(id: string): Promise<School | undefined> {
-    try {
-      const schoolRef = doc(db, "schools", id);
-      const schoolSnap = await getDoc(schoolRef);
-      
-      if (schoolSnap.exists()) {
-        return { id: schoolSnap.id, ...schoolSnap.data() } as School;
-      }
-      return undefined;
-    } catch (error) {
-      console.error("Error fetching school:", error);
-      return undefined;
-    }
-  }
-  
-  async updateSchool(id: string, data: Partial<School>): Promise<School> {
-    const schoolRef = doc(db, "schools", id);
-    await updateDoc(schoolRef, data);
-    
-    const updatedDoc = await getDoc(schoolRef);
-    return { id: updatedDoc.id, ...updatedDoc.data() } as School;
   }
 }
 
