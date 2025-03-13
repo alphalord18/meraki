@@ -40,19 +40,40 @@ export default function Register() {
 
   const schoolForm = useForm({
     resolver: zodResolver(schoolFormSchema),
+    defaultValues: {
+      name: "",
+      address: "",
+      city: "",
+      state: "",
+      pincode: "",
+      phone: ""
+    }
   });
 
   const coordinatorForm = useForm({
     resolver: zodResolver(coordinatorFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: ""
+    }
   });
 
   const participantForm = useForm({
     resolver: zodResolver(participantFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      grade: "",
+      details: {}
+    }
   });
 
   const handleSchoolSubmit = (data: any) => {
     setRegistrationData(prev => ({ ...prev, school: data }));
     setCurrentStep("coordinator");
+    // Reset coordinator form when moving to it
+    coordinatorForm.reset();
   };
 
   const handleCoordinatorSubmit = (data: any) => {
@@ -88,14 +109,19 @@ export default function Register() {
       // Generate password for coordinator
       const password = generatePassword();
 
-      // Store in Firebase
-      const docRef = await addDoc(collection(db, "registrations"), {
+      // Create document ID from school name and address
+      const docId = `${data.school.name}_${data.school.address}`.replace(/[^a-zA-Z0-9]/g, '_');
+
+      // Store in Firebase with custom document ID
+      const registrationsRef = collection(db, "registrations");
+      const docRef = await addDoc(registrationsRef, {
         ...data,
         coordinator: {
           ...data.coordinator,
           password
         },
-        createdAt: new Date()
+        createdAt: new Date(),
+        documentId: docId // Store the ID in the document as well
       });
 
       // Send coordinator credentials via API
@@ -253,6 +279,7 @@ export default function Register() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
+                  key="coordinator"
                 >
                   <Form {...coordinatorForm}>
                     <form onSubmit={coordinatorForm.handleSubmit(handleCoordinatorSubmit)} className="space-y-4">
@@ -276,7 +303,14 @@ export default function Register() {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" {...field} />
+                              <Input 
+                                type="email" 
+                                {...field} 
+                                onChange={(e) => {
+                                  field.onChange(e);
+                                  coordinatorForm.trigger("email");
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -388,7 +422,14 @@ export default function Register() {
                               <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                  <Input type="email" {...field} />
+                                  <Input 
+                                    type="email" 
+                                    {...field}
+                                    onChange={(e) => {
+                                      field.onChange(e);
+                                      participantForm.trigger("email");
+                                    }}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

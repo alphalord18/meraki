@@ -51,6 +51,113 @@ export class MemStorage implements IStorage {
       speakers: 1,
       sponsors: 1
     };
+
+    // Initialize with sample data
+    this.initializeSampleData();
+  }
+
+  private initializeSampleData() {
+    // Sample events
+    const sampleEvents: InsertEvent[] = [
+      {
+        title: "Poetry Slam Competition",
+        description: "Express your thoughts through verses in this competitive poetry event",
+        date: new Date("2025-03-20"),
+        category: "Competition",
+        registrationOpen: true,
+        maxParticipants: 3
+      },
+      {
+        title: "Creative Writing Workshop",
+        description: "Learn the art of storytelling from experienced authors",
+        date: new Date("2025-03-21"),
+        category: "Workshop",
+        registrationOpen: true,
+        maxParticipants: 2
+      },
+      {
+        title: "Literary Debate",
+        description: "Engage in intellectual discourse on contemporary literary topics",
+        date: new Date("2025-03-22"),
+        category: "Competition",
+        registrationOpen: true,
+        maxParticipants: 4
+      }
+    ];
+
+    sampleEvents.forEach(event => this.createEvent(event));
+
+    // Sample blog posts
+    const samplePosts: InsertBlogPost[] = [
+      {
+        title: "The Evolution of Modern Literature",
+        content: "Exploring how digital age has transformed storytelling...",
+        authorId: 1,
+        published: true
+      },
+      {
+        title: "Why Poetry Matters in 2025",
+        content: "The continuing relevance of poetic expression in our fast-paced world...",
+        authorId: 1,
+        published: true
+      },
+      {
+        title: "Literary Festivals: A Global Perspective",
+        content: "How literary events are shaping cultural exchange worldwide...",
+        authorId: 1,
+        published: true
+      }
+    ];
+
+    samplePosts.forEach(post => this.createBlogPost(post));
+
+    // Sample speakers
+    const sampleSpeakers: InsertSpeaker[] = [
+      {
+        name: "Dr. Sarah Johnson",
+        bio: "Award-winning poet and professor of Creative Writing at Literary University",
+        imageUrl: "https://picsum.photos/200",
+        eventId: 1
+      },
+      {
+        name: "Michael Chen",
+        bio: "Bestselling author and creative writing workshop facilitator",
+        imageUrl: "https://picsum.photos/201",
+        eventId: 2
+      },
+      {
+        name: "Priya Patel",
+        bio: "Literary critic and cultural commentator for The Literary Review",
+        imageUrl: "https://picsum.photos/202",
+        eventId: 3
+      }
+    ];
+
+    sampleSpeakers.forEach(speaker => this.createSpeaker(speaker));
+
+    // Sample sponsors
+    const sampleSponsors: InsertSponsor[] = [
+      {
+        name: "Wordsmith Publishing House",
+        tier: "Platinum",
+        logoUrl: "https://picsum.photos/203",
+        website: "https://example.com/wordsmith"
+      },
+      {
+        name: "Literary Cafe Chain",
+        tier: "Gold",
+        logoUrl: "https://picsum.photos/204",
+        website: "https://example.com/literary-cafe"
+      },
+      {
+        name: "Global Books",
+        tier: "Silver",
+        logoUrl: "https://picsum.photos/205",
+        website: "https://example.com/global-books"
+      }
+    ];
+
+    sampleSponsors.forEach(sponsor => this.createSponsor(sponsor));
   }
 
   // User operations
