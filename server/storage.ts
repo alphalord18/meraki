@@ -4,7 +4,7 @@ import {
   type Participant, type InsertParticipant
 } from "@shared/schema";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where, addDoc, updateDoc, doc, getDoc } from "firebase/firestore";
 
 // Firebase Configuration 
 const firebaseConfig = {

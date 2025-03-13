@@ -1,3 +1,4 @@
+
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -9,7 +10,7 @@ const serviceAccount = {
 
 const adminApp = initializeApp({
   credential: cert(serviceAccount),
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID
+  projectId: "merakifest-d9822"
 });
 
 export const adminDb = getFirestore(adminApp);
