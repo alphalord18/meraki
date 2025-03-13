@@ -231,10 +231,77 @@ export default function Dashboard() {
     }
   };
 
+  // Handle editing participant details
   const handleEditParticipant = (participant: any) => {
     setSelectedParticipant(participant);
-    participantForm.reset(participant);
+    participantForm.reset({
+      name: participant.name,
+      email: participant.email,
+      grade: participant.grade
+    });
     setIsEditingParticipant(true);
+  };
+
+  // Save edited participant
+  const saveParticipant = async (data: any) => {
+    if (!selectedParticipant) return;
+
+    setIsSaving(true);
+    try {
+      // Find which event this participant belongs to
+      let eventId: string | null = null;
+      let participantIndex: number = -1;
+
+      // Look through each event's participants
+      for (const [evtId, participants] of Object.entries(registrationData.participants)) {
+        const index = (participants as any[]).findIndex(p => 
+          p.name === selectedParticipant.name && 
+          p.email === selectedParticipant.email
+        );
+
+        if (index !== -1) {
+          eventId = evtId;
+          participantIndex = index;
+          break;
+        }
+      }
+
+      if (eventId !== null && participantIndex !== -1) {
+        // Update the participant in the local state
+        const updatedParticipants = [...registrationData.participants[eventId]];
+        updatedParticipants[participantIndex] = { ...data };
+
+        const updatedRegistrationData = {
+          ...registrationData,
+          participants: {
+            ...registrationData.participants,
+            [eventId]: updatedParticipants
+          }
+        };
+
+        // Update in Firebase if needed
+        if (selectedParticipant.id) {
+          await axios.put(`/api/participants/firebase/${selectedParticipant.id}`, data);
+        }
+
+        setRegistrationData(updatedRegistrationData);
+        toast({
+          title: "Success",
+          description: "Participant details updated successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating participant:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update participant details",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+      setIsEditingParticipant(false);
+      setSelectedParticipant(null);
+    }
   };
 
   if (!registrationData) {
@@ -436,7 +503,7 @@ export default function Dashboard() {
             <CardContent>
               {isEditingParticipant && selectedParticipant ? (
                 <Form {...participantForm}>
-                  <form onSubmit={participantForm.handleSubmit(() => handleSave("participant"))} className="space-y-4">
+                  <form onSubmit={participantForm.handleSubmit(saveParticipant)} className="space-y-4">
                     <FormField
                       control={participantForm.control}
                       name="name"
