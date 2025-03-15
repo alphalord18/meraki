@@ -102,4 +102,13 @@
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
   }
+  {
+  "builds": [
+    { "src": "client/src/App.tsx", "use": "@vercel/next" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/app/$1" }
+  ]
+}
+
 }
