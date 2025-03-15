@@ -1,0 +1,8 @@
+{
+  "builds": [
+    { "src": "app/page.tsx", "use": "@vercel/next" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/app/$1" }
+  ]
+}
