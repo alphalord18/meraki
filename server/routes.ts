@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertEventSchema, insertBlogPostSchema, insertSpeakerSchema, insertSponsorSchema, schoolFormSchema, participantFormSchema } from "@shared/schema";
+import { insertEventSchema, insertBlogPostSchema, insertSpeakerSchema, insertSponsorSchema } from "@shared/schema";
 import { z } from "zod";
 
 const contactSchema = z.object({
@@ -100,57 +100,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Contact form submitted successfully" });
     } catch (error) {
       res.status(400).json({ message: "Invalid contact form data" });
-    }
-  });
-  
-  // Schools endpoints
-  app.get("/api/schools/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
-      const school = await storage.getSchool(id);
-      if (!school) {
-        return res.status(404).json({ message: "School not found" });
-      }
-      res.json(school);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch school" });
-    }
-  });
-  
-  app.put("/api/schools/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
-      const data = schoolFormSchema.parse(req.body);
-      const school = await storage.updateSchool(id, data);
-      res.json(school);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid school data" });
-    }
-  });
-
-  // Participants endpoints
-  app.get("/api/participants", async (req, res) => {
-    try {
-      const schoolId = req.query.schoolId;
-      if (!schoolId) {
-        return res.status(400).json({ message: "School ID is required" });
-      }
-      
-      const participants = await storage.getParticipantsBySchool(schoolId as string);
-      res.json(participants);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch participants" });
-    }
-  });
-  
-  app.put("/api/participants/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
-      const data = participantFormSchema.parse(req.body);
-      const participant = await storage.updateParticipant(id, data);
-      res.json(participant);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid participant data" });
     }
   });
 
